@@ -61,9 +61,28 @@ export default function Home() {
                   <ModalHeader>Nueva Reserva</ModalHeader>
                   <ModalCloseButton />
                   <ModalBody>
-                    <form action="#" method="post" className="mt-8">
+                    <form action="#" method="post" className="mt-2">
                       <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
 
+                      {/* Input Matricula */}
+                      <div className="col-span-full">
+                          <label
+                            htmlFor="matricula"
+                            className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
+                          >
+                            Matricula
+                            <span className="text-red-500">*</span>
+                          </label>
+                          <TextInput
+                            type="text"
+                            id="matricula"
+                            name="matricula"
+                            autoComplete="matricula"
+                            placeholder="Matricula"
+                            className="mt-2"
+                            required
+                          />
+                        </div>
                         {/* Input Nombre */}
                         <div className="col-span-full sm:col-span-3">
                           <label
@@ -106,16 +125,22 @@ export default function Home() {
 
                         {/* Select a Laboratorios */}
                         <div className="col-span-full">
-                          <label htmlFor="laboratorios" className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">Laboratorio</label>
+                          <label htmlFor="laboratorios" className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">Laboratorios</label>
                           <Select id="laboratorios" name="laboratorios" className="mt-2" placeholder="Laboratorios">
-                            <SelectItem value="1">
+                            <SelectItem value="redes">
                               Redes
                             </SelectItem>
-                            <SelectItem value="2">
+                            <SelectItem value="computacion">
                               Computacion
                             </SelectItem>
-                            <SelectItem value="3">
+                            <SelectItem value="comunicaciones">
                               Comunicaciones
+                            </SelectItem>
+                            <SelectItem value="medicina">
+                              Medicina
+                            </SelectItem>
+                            <SelectItem value="nanociencias">
+                              Nanociencias
                             </SelectItem>
                           </Select>
                         </div>
@@ -131,37 +156,53 @@ export default function Home() {
                           <DatePicker locale={es} minDate={dateNow} placeholder="Fecha de Reserva" id="city" className="mt-2" />
                         </div>
 
-                        {/* Inputs Horas */}
-                        <div className="col-span-full sm:col-span-3">
-                          <label
-                            htmlFor="StartHour"
-                            className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
-                          >
-                            Hora de Entrada
-                          </label>
-                          <br />
-                          <input
-                            type="time"
-                            id="StartHour"
-                            name="StartHour"
-                            className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mt-2"
-                            required />
-                        </div>
-
-                        <div className="col-span-full sm:col-span-3">
-                          <label
-                            htmlFor="EndHour"
-                            className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
-                          >
-                            Hora de Salida
-                          </label>
-                          <br />
-                          <input
-                            type="time"
-                            id="EndHour"
-                            name="EndHour"
-                            className="bg-white border border-gray-300 text-gray-900 text-sm rounded-lg focus:ring-blue-500 focus:border-blue-500 block w-full p-2.5 dark:bg-gray-700 dark:border-gray-600 dark:placeholder-gray-400 dark:text-white dark:focus:ring-blue-500 dark:focus:border-blue-500 mt-2"
-                            required />
+                        {/* Input Horarios */}
+                        <div className="col-span-full">
+                          <label htmlFor="horarios" className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">Horarios</label>
+                          <Select id="horarios" name="horarios" className="mt-2" placeholder="Horarios">
+                            <SelectItem value="8-9">
+                              8:00 - 9:00
+                            </SelectItem>
+                            <SelectItem value="9-10">
+                              9:00 - 10:00
+                            </SelectItem>
+                            <SelectItem value="10-11">
+                              10:00 - 11:00
+                            </SelectItem>
+                            <SelectItem value="11-12">
+                              11:00 - 12:00
+                            </SelectItem>
+                            <SelectItem value="12-13">
+                              12:00 - 13:00
+                            </SelectItem>
+                            <SelectItem value="13-14">
+                              13:00 - 14:00
+                            </SelectItem>
+                            <SelectItem value="14-15">
+                              14:00 - 15:00
+                            </SelectItem>
+                            <SelectItem value="15-16">
+                              15:00 - 16:00
+                            </SelectItem>
+                            <SelectItem value="16-17">
+                              16:00 - 17:00
+                            </SelectItem>
+                            <SelectItem value="17-18">
+                              17:00 - 18:00
+                            </SelectItem>
+                            <SelectItem value="18-19">
+                              18:00 - 19:00
+                            </SelectItem>
+                            <SelectItem value="19-20">
+                              19:00 - 20:00
+                            </SelectItem>
+                            <SelectItem value="20-21">
+                              20:00 - 21:00
+                            </SelectItem>
+                            <SelectItem value="21-22">
+                              21:00 - 22:00
+                            </SelectItem>
+                          </Select>
                         </div>
                       </div>
 
@@ -170,6 +211,7 @@ export default function Home() {
                         <button
                           type="button"
                           className="whitespace-nowrap rounded-tremor-small px-4 py-2.5 text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
+                          onClick={onClose}
                         >
                           Cancelar
                         </button>
@@ -200,6 +242,7 @@ export default function Home() {
                     <th scope="col" className="px-4 py-3">Laboratorio</th>
                     <th scope="col" className="px-4 py-3">Fecha</th>
                     <th scope="col" className="px-4 py-3">Hora</th>
+                    <th scope="col" className="px-4 py-3">Acciones</th>
                   </tr>
                 </thead>
                 <tbody>
@@ -209,6 +252,10 @@ export default function Home() {
                     <td className="px-4 py-3">Redes</td>
                     <td className="px-4 py-3">15/3/2024</td>
                     <td className="px-4 py-3">10:00 a 12:00</td>
+                    <td className="px-4 py-3">
+                      <Button className="me-4" variant="light">Editar</Button>
+                      <Button className="ms-4" variant="light" color="red">Eliminar</Button>
+                    </td>
                   </tr>
                   <tr className="border-b dark:border-gray-700">
                     <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">00002</th>
@@ -216,6 +263,10 @@ export default function Home() {
                     <td className="px-4 py-3">Computacion</td>
                     <td className="px-4 py-3">15/3/2024</td>
                     <td className="px-4 py-3">15:00 a 17:00</td>
+                    <td className="px-4 py-3">
+                      <Button className="me-4" variant="light">Editar</Button>
+                      <Button className="ms-4" variant="light" color="red">Eliminar</Button>
+                    </td>
                   </tr>
 
                 </tbody>
