@@ -1,8 +1,58 @@
-import { Button } from "@tremor/react";
+import { Button, DateRangePicker, DateRangePickerValue, DateRangePickerItem, Card } from "@tremor/react";
 import Link from "next/link";
 import Image from 'next/image'
+import { useState } from "react";
+import useSWR from "swr";
+import { format, parseISO } from "date-fns";
+import { es } from 'date-fns/locale';
+
+interface Reserva {
+    id: string;
+    matricula: string;
+    nombre: string;
+    correo: string;
+    laboratorio: string;
+    fecha: string;
+    hora: string;
+}
 
 export default function RegistrosPasados() {
+
+    const dateNow = new Date();
+    const fetcher = async (url: string) => {
+        const response = await fetch(url);
+        if (!response.ok) {
+            throw new Error('Hubo un problema al obtener las reservas.');
+        }
+        const data = await response.json();
+        return data.reservas;
+    }
+
+    const { data: reservas, error: errorReservas, mutate: mutateReservas } = useSWR('https://rq91yb8eui.execute-api.us-east-1.amazonaws.com/default/reservas-funcion', fetcher);
+
+    const [datosReserva, setDatosReserva] = useState<Reserva>({
+        id: '',
+        matricula: '',
+        nombre: '',
+        correo: '',
+        laboratorio: '',
+        fecha: '',
+        hora: '',
+    });
+
+    const [filtroDate, setFiltroDate] = useState<DateRangePickerValue>({
+        from: new Date(),
+        to: new Date()
+    });
+
+
+    // Función para filtrar reservas dentro del rango de fechas
+    const reservasFiltradas = reservas && reservas.filter((reserva: { fecha: string | Date }) => {
+        const fechaReserva = new Date(reserva.fecha);
+        return fechaReserva >= (filtroDate.from || new Date) && fechaReserva <= (filtroDate.to || new Date);
+    });
+
+
     return (
         <main>
             <nav className="bg-white dark:bg-gray-900 fixed w-full z-20 top-0 start-0 border-b border-gray-200 dark:border-gray-600">
@@ -37,20 +87,23 @@ export default function RegistrosPasados() {
 
             <section className="mt-20 p-3 sm:p-5">
                 <div className="mx-auto max-w-screen-xl px-4 lg:px-12">
-                    <div className="relative overflow-hidden bg-white shadow-sm border dark:bg-gray-800 sm:rounded-lg mb-5">
-                        <div className="flex-row items-center justify-between p-4 space-y-3 sm:flex sm:space-y-0 sm:space-x-4">
-                            <div>
-                                <h5 className="mr-3 font-semibold dark:text-white">Reservas Pasadas</h5>
-                            </div>
-                        </div>
 
-                    </div>
+                    <Card className="flex-row items-center justify-between mb-4 p-4 space-y-3 sm:flex sm:space-y-0 sm:space-x-4">
+                        <div>
+                            <h5 className="mr-3 font-semibold dark:text-white">Reservas Pasadas</h5>
+                        </div>
+                        <DateRangePicker className="mx-auto max-w-md z-50" enableYearNavigation={true} value={filtroDate} onValueChange={setFiltroDate} locale={es} selectPlaceholder="Seleccionar Fechas" color="rose">
+                        </DateRangePicker>
+                    </Card>
+
+
                     <div className="bg-white dark:bg-gray-800 relative shadow-sm border sm:rounded-lg overflow-hidden">
                         <div className="overflow-x-auto">
                             <table className="w-full text-sm text-left text-gray-500 dark:text-gray-400">
                                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                                     <tr>
                                         <th scope="col" className="px-4 py-3">ID</th>
+                                        <th scope="col" className="px-4 py-3">Matricula</th>
                                         <th scope="col" className="px-4 py-3">Nombre</th>
                                         <th scope="col" className="px-4 py-3">Laboratorio</th>
                                         <th scope="col" className="px-4 py-3">Fecha</th>
@@ -58,20 +111,16 @@ export default function RegistrosPasados() {
                                     </tr>
                                 </thead>
                                 <tbody>
-                                    <tr className="border-b dark:border-gray-700">
-                                        <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">00001</th>
-                                        <td className="px-4 py-3">John Rodriguez</td>
-                                        <td className="px-4 py-3">Redes</td>
-                                        <td className="px-4 py-3">15/3/2024</td>
-                                        <td className="px-4 py-3">10:00 a 12:00</td>
-                                    </tr>
-                                    <tr className="border-b dark:border-gray-700">
-                                        <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">00002</th>
-                                        <td className="px-4 py-3">Jose Reyes</td>
-                                        <td className="px-4 py-3">Computacion</td>
-                                        <td className="px-4 py-3">15/3/2024</td>
-                                        <td className="px-4 py-3">15:00 a 17:00</td>
-                                    </tr>
+                                    {Array.isArray(reservasFiltradas) && reservasFiltradas.map((reserva: Reserva) => (
+                                        <tr key={reserva.id} className="border-b dark:border-gray-700">
+                                            <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{reserva.id}</th>
+                                            <td className="px-4 py-3">{reserva.matricula}</td>
+                                            <td className="px-4 py-3">{reserva.nombre}</td>
+                                            <td className="px-4 py-3">{reserva.laboratorio}</td>
+                                            <td className="px-4 py-3">{format(parseISO(reserva.fecha), 'dd/MM/yyyy')}</td>
+                                            <td className="px-4 py-3">{reserva.hora}</td>
+                                        </tr>
+                                    ))}
 
                                 </tbody>
                             </table>

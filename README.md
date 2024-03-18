@@ -1,6 +1,5 @@
 This is a [Next.js](https://nextjs.org/) project bootstrapped with [`create-next-app`](https://github.com/vercel/next.js/tree/canary/packages/create-next-app).
 
-## Credenciales de CockroacDB
+## Para Iniciar Proyecto
 
-user: john
-password: u4F68p43F_s5Zul1cclC8g
+Correr npm install y luego, npm run dev

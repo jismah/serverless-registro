@@ -4,11 +4,115 @@ import es from 'date-fns/locale/es';
 import Link from "next/link";
 import Image from 'next/image'
 import { RiAddLine } from "@remixicon/react";
+import { useEffect, useState } from "react";
+import useSWR from "swr";
+import { format, parseISO } from "date-fns";
+
+interface Reserva {
+  id: string;
+  matricula: string;
+  nombre: string;
+  correo: string;
+  laboratorio: string;
+  fecha: string;
+  hora: string;
+}
 
 export default function Home() {
 
   const { isOpen, onOpen, onClose } = useDisclosure();
   const dateNow = new Date();
+
+  const fetcher = async (url: string) => {
+    const response = await fetch(url);
+    if (!response.ok) {
+      throw new Error('Hubo un problema al obtener las reservas.');
+    }
+    const data = await response.json();
+    return data.reservas;
+  }
+
+  const { data: reservas, error: errorReservas, mutate: mutateReservas } = useSWR('https://rq91yb8eui.execute-api.us-east-1.amazonaws.com/default/reservas-funcion', fetcher);
+  
+  const [datosReserva, setDatosReserva] = useState<Reserva>({
+    id: '',
+    matricula: '',
+    nombre: '',
+    correo: '',
+    laboratorio: '',
+    fecha: '',
+    hora: '',
+  });
+
+  const handleSubmit = async (event: React.FormEvent<HTMLFormElement>) => {
+    event.preventDefault();
+    console.log(datosReserva);
+    try {
+      await guardarDatos(datosReserva);
+      mutateReservas();
+
+      // Limpiar Inputs
+      setDatosReserva({
+        id: '',
+        matricula: '',
+        nombre: '',
+        correo: '',
+        laboratorio: '',
+        fecha: '',
+        hora: '',
+      });
+
+    } catch (error) {
+      console.error('Error al guardar la reserva:', error);
+    }
+  };
+
+  async function guardarDatos(datosReserva: Reserva) {
+    try {
+      await fetch('https://rq91yb8eui.execute-api.us-east-1.amazonaws.com/default/reservas-funcion', {
+        method: 'POST',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(datosReserva)
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Hubo un problema al guardar los datos en AWS.');
+          }
+          alert('Se Guardo Correctamente La Nueva Reserva!');
+          return response.json();
+        }).finally(() => {
+
+        });
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  async function deleteReserva(reserva: Reserva) {
+    try {
+      await fetch(`https://rq91yb8eui.execute-api.us-east-1.amazonaws.com/default/reservas-funcion`, {
+        method: 'DELETE',
+        headers: {
+          'Content-Type': 'application/json'
+        },
+        body: JSON.stringify(reserva),
+      })
+        .then(response => {
+          if (!response.ok) {
+            throw new Error('Hubo un problema al eliminar los datos en AWS.');
+          }
+          alert('Se Eliminó Correctamente La Reserva!');
+          mutateReservas();
+          return response.json();
+        })
+    } catch (error) {
+      console.error(error);
+    }
+  }
+
+  const reservasFuturas = reservas && reservas.filter((reserva: { fecha: string | Date; }) => new Date(reserva.fecha) >= dateNow);
 
   return (
     <main>
@@ -53,7 +157,7 @@ export default function Home() {
               <Button icon={RiAddLine} onClick={onOpen} variant="primary">
                 Nueva Reserva
               </Button>
-              
+
 
               <Modal isOpen={isOpen} onClose={onClose} size={'xl'} isCentered>
                 <ModalOverlay />
@@ -61,17 +165,17 @@ export default function Home() {
                   <ModalHeader>Nueva Reserva</ModalHeader>
                   <ModalCloseButton />
                   <ModalBody>
-                    <form action="#" method="post" className="mt-2">
+                    <form onSubmit={handleSubmit} method="post" className="mt-2">
                       <div className="grid grid-cols-1 gap-x-4 gap-y-6 sm:grid-cols-6">
 
-                      {/* Input Matricula */}
-                      <div className="col-span-full">
+                        {/* Input Matricula */}
+                        <div className="col-span-full">
                           <label
                             htmlFor="matricula"
                             className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
                           >
                             Matricula
-                            <span className="text-red-500">*</span>
+                            <span className="text-red-500"> *</span>
                           </label>
                           <TextInput
                             type="text"
@@ -80,9 +184,12 @@ export default function Home() {
                             autoComplete="matricula"
                             placeholder="Matricula"
                             className="mt-2"
+                            value={datosReserva.matricula || ""}
+                            onChange={(e) => setDatosReserva({ ...datosReserva, matricula: e.target.value })}
                             required
                           />
                         </div>
+
                         {/* Input Nombre */}
                         <div className="col-span-full sm:col-span-3">
                           <label
@@ -90,7 +197,7 @@ export default function Home() {
                             className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
                           >
                             Nombre Completo
-                            <span className="text-red-500">*</span>
+                            <span className="text-red-500"> *</span>
                           </label>
                           <TextInput
                             type="text"
@@ -99,26 +206,30 @@ export default function Home() {
                             autoComplete="name"
                             placeholder="Nombre Estudiante"
                             className="mt-2"
+                            value={datosReserva.nombre || ""}
+                            onChange={(e) => setDatosReserva({ ...datosReserva, nombre: e.target.value })}
                             required
                           />
                         </div>
 
-                        {/* Input Carrera */}
+                        {/* Input Correo*/}
                         <div className="col-span-full sm:col-span-3">
                           <label
-                            htmlFor="carrera"
+                            htmlFor="email"
                             className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
                           >
-                            Carrera
-                            <span className="text-red-500">*</span>
+                            Correo
+                            <span className="text-red-500"> *</span>
                           </label>
                           <TextInput
                             type="text"
-                            id="carrera"
-                            name="carrera"
-                            autoComplete="carrera"
-                            placeholder="Carrera"
+                            id="email"
+                            name="email"
+                            autoComplete="email"
+                            placeholder="Email"
                             className="mt-2"
+                            value={datosReserva.correo || ""}
+                            onChange={(e) => setDatosReserva({ ...datosReserva, correo: e.target.value })}
                             required
                           />
                         </div>
@@ -126,20 +237,20 @@ export default function Home() {
                         {/* Select a Laboratorios */}
                         <div className="col-span-full">
                           <label htmlFor="laboratorios" className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">Laboratorios</label>
-                          <Select id="laboratorios" name="laboratorios" className="mt-2" placeholder="Laboratorios">
-                            <SelectItem value="redes">
+                          <Select id="laboratorios" name="laboratorios" className="mt-2" placeholder="Laboratorios" value={datosReserva.laboratorio || ""} onValueChange={(e) => setDatosReserva({ ...datosReserva, laboratorio: e })}>
+                            <SelectItem value="Redes">
                               Redes
                             </SelectItem>
-                            <SelectItem value="computacion">
+                            <SelectItem value="Computacion">
                               Computacion
                             </SelectItem>
-                            <SelectItem value="comunicaciones">
+                            <SelectItem value="Comunicaciones">
                               Comunicaciones
                             </SelectItem>
-                            <SelectItem value="medicina">
+                            <SelectItem value="Medicina">
                               Medicina
                             </SelectItem>
-                            <SelectItem value="nanociencias">
+                            <SelectItem value="Nanociencias">
                               Nanociencias
                             </SelectItem>
                           </Select>
@@ -148,18 +259,18 @@ export default function Home() {
                         {/* Input Fecha */}
                         <div className="col-span-full">
                           <label
-                            htmlFor="city"
+                            htmlFor="fecha"
                             className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong"
                           >
                             Fecha
                           </label>
-                          <DatePicker locale={es} minDate={dateNow} placeholder="Fecha de Reserva" id="city" className="mt-2" />
+                          <DatePicker onValueChange={(e) => setDatosReserva({ ...datosReserva, fecha: e?.toISOString() || '' })} locale={es} minDate={dateNow} placeholder="Fecha de Reserva" id="fecha" className="mt-2" />
                         </div>
 
                         {/* Input Horarios */}
                         <div className="col-span-full">
                           <label htmlFor="horarios" className="text-tremor-default font-medium text-tremor-content-strong dark:text-dark-tremor-content-strong">Horarios</label>
-                          <Select id="horarios" name="horarios" className="mt-2" placeholder="Horarios">
+                          <Select id="horarios" name="horarios" className="mt-2" placeholder="Horarios" value={datosReserva.hora || ""} onValueChange={(e) => setDatosReserva({ ...datosReserva, hora: e })}>
                             <SelectItem value="8-9">
                               8:00 - 9:00
                             </SelectItem>
@@ -238,6 +349,7 @@ export default function Home() {
                 <thead className="text-xs text-gray-700 uppercase bg-gray-50 dark:bg-gray-700 dark:text-gray-400">
                   <tr>
                     <th scope="col" className="px-4 py-3">ID</th>
+                    <th scope="col" className="px-4 py-3">Matricula</th>
                     <th scope="col" className="px-4 py-3">Nombre</th>
                     <th scope="col" className="px-4 py-3">Laboratorio</th>
                     <th scope="col" className="px-4 py-3">Fecha</th>
@@ -246,29 +358,21 @@ export default function Home() {
                   </tr>
                 </thead>
                 <tbody>
-                  <tr className="border-b dark:border-gray-700">
-                    <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">00001</th>
-                    <td className="px-4 py-3">John Rodriguez</td>
-                    <td className="px-4 py-3">Redes</td>
-                    <td className="px-4 py-3">15/3/2024</td>
-                    <td className="px-4 py-3">10:00 a 12:00</td>
-                    <td className="px-4 py-3">
-                      <Button className="me-4" variant="light">Editar</Button>
-                      <Button className="ms-4" variant="light" color="red">Eliminar</Button>
-                    </td>
-                  </tr>
-                  <tr className="border-b dark:border-gray-700">
-                    <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">00002</th>
-                    <td className="px-4 py-3">Jose Reyes</td>
-                    <td className="px-4 py-3">Computacion</td>
-                    <td className="px-4 py-3">15/3/2024</td>
-                    <td className="px-4 py-3">15:00 a 17:00</td>
-                    <td className="px-4 py-3">
-                      <Button className="me-4" variant="light">Editar</Button>
-                      <Button className="ms-4" variant="light" color="red">Eliminar</Button>
-                    </td>
-                  </tr>
 
+                  {Array.isArray(reservasFuturas) && reservasFuturas.map((reserva: Reserva) => (
+                    <tr key={reserva.id} className="border-b dark:border-gray-700">
+                      <th scope="row" className="px-4 py-3 font-medium text-gray-900 whitespace-nowrap dark:text-white">{reserva.id}</th>
+                      <td className="px-4 py-3">{reserva.matricula}</td>
+                      <td className="px-4 py-3">{reserva.nombre}</td>
+                      <td className="px-4 py-3">{reserva.laboratorio}</td>
+                      <td className="px-4 py-3">{format(parseISO(reserva.fecha), 'dd/MM/yyyy')}</td>
+                      <td className="px-4 py-3">{reserva.hora}</td>
+                      <td className="px-4 py-3">
+                        <Button className="me-4" variant="light">Editar</Button>
+                        <Button onClick={() => deleteReserva(reserva)} className="ms-4" variant="light" color="red">Eliminar</Button>
+                      </td>
+                    </tr>
+                  ))}
                 </tbody>
               </table>
             </div>
